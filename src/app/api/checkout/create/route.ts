@@ -41,13 +41,21 @@ export async function POST(req: Request) {
       product_cart.push({ product_id: bumpProductId, quantity: 1 });
     }
 
-    // Create checkout session using SDK
-    const session = await client.checkoutSessions.create({
+    // Some versions of the Dodo API will fail if metadata is an empty object
+    // or if billing_address is missing.
+    const sessionPayload: any = {
       product_cart,
       return_url: successUrl,
       cancel_url: cancelUrl,
-      metadata: metadata || {}
-    });
+      billing_address: { country: "US" }
+    };
+
+    if (metadata && Object.keys(metadata).length > 0) {
+      sessionPayload.metadata = metadata;
+    }
+
+    // Create checkout session using SDK
+    const session = await client.checkoutSessions.create(sessionPayload);
     
     const checkoutUrl = session.checkout_url;
 
@@ -56,8 +64,12 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ checkoutUrl });
-  } catch (error) {
+  } catch (error: any) {
     console.error("[Checkout Create Error]:", error);
-    return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 });
+    
+    return NextResponse.json({ 
+      error: "Failed to create checkout session",
+      details: error?.message || error?.toString() || "Unknown error"
+    }, { status: 500 });
   }
 }

@@ -14,7 +14,7 @@ export const LEGAL = {
   privacy: {
     title: "Privacy Policy",
     intro:
-      "This Privacy Policy explains how [BUSINESS LEGAL NAME] ("we", "us", or "our") collects, uses and protects your personal information when you visit our website and purchase our digital products.",
+      "This Privacy Policy explains how [BUSINESS LEGAL NAME] (\"we\", \"us\", or \"our\") collects, uses and protects your personal information when you visit our website and purchase our digital products.",
     sections: [
       {
         heading: "Information We Collect",

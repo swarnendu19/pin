@@ -32,8 +32,9 @@ export interface CheckoutResult {
 export async function initiateCheckout(
   options: CheckoutOptions = {}
 ): Promise<CheckoutResult> {
-  const successUrl = options.successUrl ?? `${PRODUCT.appUrl}/success`;
-  const cancelUrl = options.cancelUrl ?? `${PRODUCT.appUrl}/?checkout=cancelled`;
+  const baseUrl = PRODUCT.appUrl.replace(/\/$/, "");
+  const successUrl = options.successUrl ?? `${baseUrl}/success`;
+  const cancelUrl = options.cancelUrl ?? `${baseUrl}/?checkout=cancelled`;
 
   try {
     const response = await fetch("/api/checkout/create", {

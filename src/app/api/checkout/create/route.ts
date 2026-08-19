@@ -34,28 +34,17 @@ export async function POST(req: Request) {
     const client = new Dodopayments({ bearerToken: process.env.DODO_API_KEY });
     
     // Create checkout session using SDK
-    const payment = await client.payments.create({
-      billing: {
-        city: "",
-        country: "US",
-        state: "",
-        street: "",
-        zipcode: ""
-      },
-      customer: {
-        email: "",
-        name: ""
-      },
+    const session = await client.checkoutSessions.create({
       product_cart: [{
         product_id: productId,
         quantity: 1
       }],
       return_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: metadata || {}
     });
     
-    // We expect the payment object to contain a checkout_url or similar property
-    // Adapting based on typical SDK behavior (Dodo uses payment_link or checkout_url)
-    const checkoutUrl = (payment as any).checkout_url || (payment as any).payment_link;
+    const checkoutUrl = session.checkout_url;
 
     if (!checkoutUrl) {
       throw new Error("No checkout URL returned from Dodo API");

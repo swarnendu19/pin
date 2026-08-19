@@ -53,9 +53,12 @@ export async function initiateCheckout(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      const errorMsg = errorData.details 
+        ? `${errorData.error}: ${errorData.details}` 
+        : errorData.error ?? "Failed to start checkout. Please try again.";
       return {
         success: false,
-        error: (errorData as { error?: string }).error ?? "Failed to start checkout. Please try again.",
+        error: errorMsg,
       };
     }
 

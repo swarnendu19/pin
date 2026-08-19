@@ -9,6 +9,8 @@ import { analytics } from "@/lib/analytics";
 import { getAttribution } from "@/lib/utm";
 import { PRODUCT } from "@/config/product";
 
+import { CheckoutModal } from "./CheckoutModal";
+
 type CTALocation = "hero" | "product" | "parent" | "final" | "sticky";
 
 interface PurchaseButtonProps {
@@ -24,18 +26,6 @@ interface PurchaseButtonProps {
   fullWidth?: boolean;
 }
 
-/**
- * Centralized purchase button.
- * ALL checkout initiation flows through here.
- *
- * Handles:
- * 1. Analytics event
- * 2. Dodo checkout initiation
- * 3. Duplicate-click prevention
- * 4. Loading feedback
- * 5. Error handling
- * 6. UTM attribution preservation
- */
 export function PurchaseButton({
   label,
   location = "hero",
@@ -43,42 +33,15 @@ export function PurchaseButton({
   variant = "primary",
   fullWidth = false,
 }: PurchaseButtonProps) {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Display label based on product config
   const displayLabel = label ?? `Get The Complete Kit — ${PRODUCT.priceDisplay}`;
 
-  async function handleClick() {
-    if (isLoading || !PRODUCT.checkoutEnabled) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    // 1. Track CTA click
+  function handleClick() {
+    if (!PRODUCT.checkoutEnabled) return;
     analytics.ctaClick(location);
-    analytics.checkoutStarted();
-
-    // 2. Capture attribution for metadata
-    const attribution = getAttribution();
-
-    // 3. Initiate checkout
-    const result = await initiateCheckout({
-      metadata: attribution
-        ? Object.fromEntries(
-            Object.entries(attribution).filter(([, v]) => v !== undefined)
-          ) as Record<string, string>
-        : {},
-    });
-
-    if (result.success && result.checkoutUrl) {
-      // Redirect to Dodo hosted checkout
-      window.location.href = result.checkoutUrl;
-    } else {
-      setIsLoading(false);
-      setError(result.error ?? "Something went wrong. Please try again.");
-    }
+    setIsModalOpen(true);
   }
 
   const baseStyles =
@@ -97,8 +60,8 @@ export function PurchaseButton({
     <div className={cn("flex flex-col items-center", fullWidth && "w-full")}>
       <button
         onClick={handleClick}
-        disabled={isLoading || !PRODUCT.checkoutEnabled}
-        aria-label={isLoading ? "Opening checkout…" : displayLabel}
+        disabled={!PRODUCT.checkoutEnabled}
+        aria-label={displayLabel}
         className={cn(
           baseStyles,
           variantStyles[variant],
@@ -106,30 +69,21 @@ export function PurchaseButton({
           className
         )}
       >
-        {isLoading ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            <span>Opening checkout…</span>
-          </>
-        ) : (
-          <span>{displayLabel}</span>
-        )}
+        <span>{displayLabel}</span>
       </button>
-
-      {error && (
-        <p
-          role="alert"
-          className="mt-2 text-sm text-red-600 text-center max-w-xs"
-        >
-          {error}
-        </p>
-      )}
 
       {!PRODUCT.checkoutEnabled && (
         <p className="mt-2 text-sm text-gray-500 text-center">
           Checkout coming soon.
         </p>
       )}
+
+      {/* Render modal unconditionally in React tree, it uses AnimatePresence internally */}
+      <CheckoutModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        location={location}
+      />
     </div>
   );
 }

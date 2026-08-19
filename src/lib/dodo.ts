@@ -14,6 +14,8 @@ export interface CheckoutOptions {
   cancelUrl?: string;
   /** Optional metadata to pass through checkout — will appear on webhook */
   metadata?: Record<string, string>;
+  /** Whether the user accepted the bump offer */
+  bumpAccepted?: boolean;
 }
 
 export interface CheckoutResult {
@@ -42,6 +44,7 @@ export async function initiateCheckout(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         productId: PRODUCT.dodoProductId,
+        bumpProductId: options.bumpAccepted ? process.env.NEXT_PUBLIC_DODO_BUMP_PRODUCT_ID : undefined,
         successUrl,
         cancelUrl,
         metadata: options.metadata ?? {},

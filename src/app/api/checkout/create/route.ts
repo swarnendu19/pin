@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { productId, successUrl, cancelUrl, metadata } = body;
+    const { productId, bumpProductId, successUrl, cancelUrl, metadata } = body;
 
     if (!productId || !successUrl || !cancelUrl) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -33,12 +33,17 @@ export async function POST(req: Request) {
 
     const client = new Dodopayments({ bearerToken: process.env.DODO_API_KEY });
     
+    const product_cart = [
+      { product_id: productId, quantity: 1 }
+    ];
+
+    if (bumpProductId) {
+      product_cart.push({ product_id: bumpProductId, quantity: 1 });
+    }
+
     // Create checkout session using SDK
     const session = await client.checkoutSessions.create({
-      product_cart: [{
-        product_id: productId,
-        quantity: 1
-      }],
+      product_cart,
       return_url: successUrl,
       cancel_url: cancelUrl,
       metadata: metadata || {}
